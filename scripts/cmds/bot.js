@@ -39,7 +39,7 @@ module.exports = {
 
         // Updated URL instead of global.GoatBot.config.api
         const response = await axios.get(
-          `https://www.noobs-api.rf.gd/dipto/baby?text=${encodeURIComponent(reply)}&senderID=${event.senderID}&font=1`
+          `https://api.noobs-api.rf.gd/dipto/baby?text=${encodeURIComponent(reply)}&senderID=${event.senderID}&font=1`
         );
 
         const message = response.data.reply;
