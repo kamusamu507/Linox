@@ -1,65 +1,96 @@
 const axios = require("axios");
-
-const baseApiUrl = async () => {
-    const base = await axios.get(
-        `https://raw.githubusercontent.com/Blankid018/D1PT0/main/baseApiUrl.json`,
-    );
-    return base.data.api;
-};
+const fs = require("fs-extra");
+const path = require("path");
+const FormData = require("form-data");
 
 module.exports.config = {
     name: "tiksr",
-    version: "1.0",
-    author: "Mesbah Bb'e",
-    countDown: 5,
+    aliases: ["tiktok", "tt", "fyp", "FYP", "4u", "foryou", "tik"],
+    version: "1.6",
+    author: "DUR4NTO",
+    countDown: 3,
     role: 0,
-    description: {
-        en: "Search for TikTok videos",
-    },
-    category: "MEDIA",
-    guide: {
-        en:
-            "{pn} <search> - <optional: number of results | blank>" +
-            "\nExample:" +
-            "\n{pn} caredit - 50",
-    },
+    description: { en: "Direct TikTok video downloader with catbox link" },
+    category: "MEDIA"
 };
 
-module.exports.onStart = async function ({ api, args, event }) {
-    let search = args.join(" ");
-    let searchLimit = 30;
+const API = "https://www.dur4nto-yeager.rf.gd/api/tiksr";
 
-    const match = search.match(/^(.+)\s*-\s*(\d+)$/);
-    if (match) {
-        search = match[1].trim();
-        searchLimit = parseInt(match[2], 10);
+function clean(n) {
+    return n.replace(/[/\\?%*:|"<>]/g, "").trim().substring(0, 150) || "video";
+}
+
+async function uploadCatbox(filepath) {
+    const form = new FormData();
+    form.append("reqtype", "fileupload");
+    form.append("fileToUpload", fs.createReadStream(filepath));
+
+    const r = await axios.post("https://catbox.moe/user/api.php", form, {
+        headers: form.getHeaders(),
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+    });
+
+    return r.data;
+}
+
+async function sendVideo(api, event, query) {
+    const res = await axios.get(`${API}?query=${encodeURIComponent(query)}`);
+    const vid = res.data;
+
+    const link =
+        vid.url ||
+        vid.video ||
+        vid.videoUrl ||
+        vid.download;
+
+    if (!link) {
+        await api.sendMessage("No video URL found.", event.threadID);
+        return;
     }
 
-    const apiUrl = `${await baseApiUrl()}/tiktoksearch?search=${encodeURIComponent(search)}&limit=${searchLimit}`;
+    const dl = await axios.get(link, { responseType: "arraybuffer" });
+    const buf = dl.data;
 
+    const filename = clean(vid.title || query) + ".mp4";
+    const filepath = path.join(__dirname, filename);
+
+    await fs.writeFile(filepath, buf);
+
+    let catbox;
     try {
-        const response = await axios.get(apiUrl);
-        const data = response.data.data;
-        const videoData = data[Math.floor(Math.random() * data.length)];
-
-        const stream = await axios({
-            method: "get",
-            url: videoData.video,
-            responseType: "stream",
-        });
-
-        let infoMessage = `🎥 Video Title: ${videoData.title}\n`;
-        infoMessage += `🔗 Video URL: ${videoData.video}\n`;
-
-        api.sendMessage(
-            { body: infoMessage, attachment: stream.data },
-            event.threadID,
-        );
-    } catch (error) {
-        console.error(error);
-        api.sendMessage(
-            "An error occurred while downloading the TikTok video.",
-            event.threadID,
-        );
+        catbox = await uploadCatbox(filepath);
+    } catch {
+        catbox = link;
     }
+
+    const body =
+`𝐁𝐚𝐛𝐲🐥
+𝐇𝐞𝐫𝐞 𝐢𝐬 𝐲𝐨𝐮𝐫 𝐕𝐢𝐝𝐞𝐨
+
+° ${vid.title || "Video"}
+° Link : ${catbox}`;
+
+    await api.sendMessage(
+        { body, attachment: fs.createReadStream(filepath) },
+        event.threadID
+    );
+
+    await fs.unlink(filepath);
+}
+
+module.exports.onStart = async function ({ api, args, event }) {
+    const query = args.join(" ").trim();
+    if (!query) return api.sendMessage("Example: tiksr mikasa", event.threadID);
+
+    try { await sendVideo(api, event, query); }
+    catch { api.sendMessage("Download failed.", event.threadID); }
+};
+
+module.exports.onReply = async function ({ api, event }) {
+    const query = event.body.trim();
+    if (!query) return;
+
+    try { await sendVideo(api, event, query); }
+    catch { api.sendMessage("Download failed.", event.threadID); }
 };
