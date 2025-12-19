@@ -19,12 +19,12 @@ async function runCommand({ api, event, args }) {
       } else if (query.length === 1) {
         finalArray = cmds.filter(cmd => cmd.cmd.startsWith(query));
         if (finalArray.length === 0) {
-          return api.sendMessage(`❌ | "${query}" diye kono command paoa jay na!`, event.threadID, event.messageID);
+          return api.sendMessage(`❌ | "${query}"𝐝𝐢𝐲𝐞 𝐤𝐨𝐧𝐨 𝐜𝐨𝐦𝐦𝐚𝐧𝐝 𝐩𝐚𝐨𝐚 𝐣𝐚𝐲 𝐧𝐢  !!`, event.threadID, event.messageID);
         }
       } else {
         finalArray = cmds.filter(cmd => cmd.cmd.includes(query));
         if (finalArray.length === 0) {
-          return api.sendMessage(`❌ | "${query}" command ta khujhe paoa jay na!`, event.threadID, event.messageID);
+          return api.sendMessage(`❌ | "${query}"𝐜𝐨𝐦𝐦𝐚𝐧𝐝 𝐭𝐚 𝐤𝐡𝐮𝐣𝐡𝐞 𝐩𝐚𝐜𝐜𝐡𝐢 𝐧𝐚𝐡 !!`, event.threadID, event.messageID);
         }
       }
     }
@@ -32,7 +32,7 @@ async function runCommand({ api, event, args }) {
     const totalPages = Math.ceil(finalArray.length / ITEMS_PER_PAGE);
     if (page < 1 || page > totalPages) {
       return api.sendMessage(
-        `❌ | Please page number 1 theke ${totalPages} er moddhe dao!`,
+        `❌ | Please page number 1 theke ${totalPages} 𝐄𝐫 𝐦𝐨𝐝𝐝𝐡𝐞 𝐝𝐚𝐰 !!`,
         event.threadID,
         event.messageID
       );
@@ -50,7 +50,7 @@ async function runCommand({ api, event, args }) {
     msg += `╰─────────────⧕`;
 
     if (page < totalPages) {
-      msg += `\nType "cmdstore ${page + 1}" for more commands! 😎`;
+      msg += `\nType "cmdstore ${page + 1}" 𝐟𝐨𝐫 𝐦𝐨𝐫𝐞 𝐜𝐨𝐦𝐦𝐚𝐧𝐝𝐬! 😎`;
     }
 
     api.sendMessage(
@@ -69,7 +69,7 @@ async function runCommand({ api, event, args }) {
       event.messageID
     );
   } catch (error) {
-    api.sendMessage("❌ | Commands load korte giye bhul hoyeche!", event.threadID, event.messageID);
+    api.sendMessage("❌ |𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬 𝐥𝐨𝐚𝐝 𝐤𝐨𝐫𝐭𝐞 𝐠𝐢𝐲𝐞 𝐛𝐡𝐮𝐥 𝐡𝐨𝐲𝐞𝐜𝐡𝐞 !!", event.threadID, event.messageID);
   }
 }
 
@@ -105,7 +105,7 @@ module.exports = {
 
   onReply: async function ({ api, event, Reply }) {
     if (Reply.author != event.senderID) {
-      return api.sendMessage("Who are you? 🐸", event.threadID, event.messageID);
+      return api.sendMessage("𝐖𝐡𝐨 𝐚𝐫𝐞 𝐲𝐨𝐮? 🐸", event.threadID, event.messageID);
     }
 
     const reply = parseInt(event.body);
@@ -127,14 +127,14 @@ module.exports = {
       const selectedCmdUrl = response.data[cmdName];
 
       if (!selectedCmdUrl) {
-        return api.sendMessage("❌ | Command URL not found.", event.threadID, event.messageID);
+        return api.sendMessage("❌ | 𝐂𝐨𝐦𝐦𝐚𝐧𝐝 𝐔𝐑𝐋 𝐧𝐨𝐭 𝐟𝐨𝐮𝐧𝐝 !!", event.threadID, event.messageID);
       }
 
       api.unsendMessage(Reply.messageID);
       const msg = `╭───────⭓\n│ STATUS : ${status || "N/A"}\n│ Command Url: ${selectedCmdUrl}\n╰─────────────⭓`;
       api.sendMessage(msg, event.threadID, event.messageID);
     } catch (error) {
-      api.sendMessage("❌ | Command URL pawa jai nai.", event.threadID, event.messageID);
+      api.sendMessage("❌ | 𝐂𝐨𝐦𝐦𝐚𝐧𝐝 𝐔𝐑𝐋 𝐩𝐚𝐰𝐚 𝐣𝐚𝐲 𝐧𝐢 !!", event.threadID, event.messageID);
     }
   }
 };

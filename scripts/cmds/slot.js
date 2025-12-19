@@ -1,79 +1,52 @@
 module.exports = {
   config: {
     name: "slot",
-    version: "1.0",
-    author: "OtinXSandip",
-    shortDescription: {
-      en: "Slot game",
-    },
-    longDescription: {
-      en: "Slot game.",
-    },
-    category: "Game",
+    version: "3.2",
+    author: "OtinXSandip [Edit by kamu]",
+    countDown: 10,
+    shortDescription: { en: "🎰 Spin & Win!" },
+    longDescription: { en: "Quick slot game with instant rewards." },
+    category: "game",
   },
+
   langs: {
     en: {
-      invalid_amount: "Enter a valid and positive amount to have a chance to win double",
-      not_enough_money: "Check your balance if you have that amount",
-      spin_message: "Spinning...",
-      win_message: "You won $%1, buddy!",
-      lose_message: "You lost $%1, buddy.",
-      jackpot_message: "Jackpot! You won $%1 with three %2 symbols, buddy!",
-    },
+      invalid_amount: "❌ Min bet: $100",
+      not_enough_money: "💸 𝐒𝐫𝐲 𝐬𝐢𝐫 𝐚𝐩𝐧𝐚𝐫 𝐜𝐚𝐬𝐡 𝐧𝐞𝐢",
+      win: "• 𝐁𝐚𝐛𝐲, 𝐲𝐨𝐮 𝐰𝐨𝐧 $%1",
+      lose: "• 𝐘𝐨𝐮 𝐥𝐨𝐬𝐭 $%1",
+      jackpot: "• 💰 𝐉𝐀𝐂𝐊𝐏𝐎𝐓! $%1"
+    }
   },
-  onStart: async function ({ args, message, event, envCommands, usersData, commandName, getLang }) {
+
+  onStart: async function ({ args, message, event, usersData, getLang }) {
     const { senderID } = event;
-    const userData = await usersData.get(senderID);
-    const amount = parseInt(args[0]);
+    const user = await usersData.get(senderID);
+    const bet = parseInt(args[0]);
 
-    if (isNaN(amount) || amount <= 0) {
-      return message.reply(getLang("invalid_amount"));
+    if (isNaN(bet) || bet < 100) return message.reply(getLang("invalid_amount"));
+    if (bet > user.money) return message.reply(getLang("not_enough_money"));
+
+    const slots = ["🍒", "🍋", "💰", "💎", "7️⃣", "🍀", "💙", "💜"];
+    const spin = () => slots[Math.floor(Math.random() * slots.length)];
+
+    const [a, b, c] = [spin(), spin(), spin()];
+    const result = `[ ${a} | ${b} | ${c} ]`;
+
+    let winAmount = 0;
+    if (a === b && b === c) {
+      winAmount = bet * (a === "7️⃣" ? 20 : 10);
+    } else if (a === b || a === c || b === c) {
+      winAmount = bet * 2;
     }
 
-    if (amount > userData.money) {
-      return message.reply(getLang("not_enough_money"));
-    }
+    const finalBalance = user.money + (winAmount - bet);
+    await usersData.set(senderID, { money: finalBalance });
 
-    const slots = ["💚", "💛", "💙", "💛", "💚", "💙", "💙", "💛", "💚"];
-    const slot1 = slots[Math.floor(Math.random() * slots.length)];
-    const slot2 = slots[Math.floor(Math.random() * slots.length)];
-    const slot3 = slots[Math.floor(Math.random() * slots.length)];
+    const msg = winAmount > bet
+      ? getLang(winAmount >= bet * 10 ? "jackpot" : "win", winAmount)
+      : getLang("lose", bet);
 
-    const winnings = calculateWinnings(slot1, slot2, slot3, amount);
-
-    await usersData.set(senderID, {
-      money: userData.money + winnings,
-      data: userData.data,
-    });
-
-    const messageText = getSpinResultMessage(slot1, slot2, slot3, winnings, getLang);
-
-    return message.reply(messageText);
-  },
+    return message.reply(`${msg}\n• 𝐆𝐚𝐦𝐞 𝐑𝐞𝐬𝐮𝐥𝐭𝐬: ${result}`);
+  }
 };
-
-function calculateWinnings(slot1, slot2, slot3, betAmount) {
-  if (slot1 === "💚" && slot2 === "💚" && slot3 === "💚") {
-    return betAmount * 10;
-  } else if (slot1 === "💛" && slot2 === "💛" && slot3 === "💛") {
-    return betAmount * 5;
-  } else if (slot1 === slot2 && slot2 === slot3) {
-    return betAmount * 3;
-  } else if (slot1 === slot2 || slot1 === slot3 || slot2 === slot3) {
-    return betAmount * 2;
-  } else {
-    return -betAmount;
-  }
-}
-
-function getSpinResultMessage(slot1, slot2, slot3, winnings, getLang) {
-  if (winnings > 0) {
-    if (slot1 === "💙" && slot2 === "💙" && slot3 === "💙") {
-      return getLang("jackpot_message", winnings, "💙");
-    } else {
-      return getLang("win_message", winnings) + `\[ ${slot1} | ${slot2} | ${slot3} ]`;
-    }
-  } else {
-    return getLang("lose_message", -winnings) + `\[ ${slot1} | ${slot2} | ${slot3} ]`;
-  }
-}

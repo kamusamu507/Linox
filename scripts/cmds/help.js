@@ -1,184 +1,187 @@
-const axios = require("axios");
-const { getPrefix } = global.utils;
-const { commands, aliases } = global.GoatBot;
-
-const mediaUrls = [
-  "",
-  "",
-  ""
-];
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
-  config: {
-    name: "help",
-    aliases: ["use"],
-    version: "1.24",
-    author: "Ayanokōji",
-    countDown: 5,
-    role: 0,
-    shortDescription: {
-      en: "Explore command usage 📖",
-    },
-    longDescription: {
-      en: "View detailed command usage, list commands by page, or filter by category ✨",
-    },
-    category: "info",
-    guide: {
-      en: "🔹 {pn} [pageNumber]\n🔹 {pn} [commandName]\n🔹 {pn} -c <categoryName>",
-    },
-    priority: 1,
-  },
+  config: {
+    name: "help",
+    version: "2.4.70",
+    role: 0,
+    countDown: 5,
+    author: "ST | Sheikh Tamim + Modified by Alamin × luciferian",
+    description: "Displays all available commands and their categories, with simple search suggestions.",
+    category: "help"
+  },
 
-  onStart: async function ({ message, args, event, threadsData, role }) {
-    try {
-      const { threadID } = event;
-      const threadData = await threadsData.get(threadID).catch(() => ({}));
-      const prefix = getPrefix(threadID) || "!";
+  onStart: async ({ api, event, args, threadsData, prefix }) => {
+    const cmdsFolderPath = path.join(__dirname, ".");
+    const files = fs.readdirSync(cmdsFolderPath).filter(file => file.endsWith(".js"));
 
-      const ownerInfo = `╭─『 AYANOKŌJI'S TOOL 』\n` +
-        `╰‣ 👑 Admin: Ayanokōji\n` +
-        `╰‣ 🤖 Bot Name: Ayanokōji's Tool\n` +
-        `╰───────────────◊\n`;
+    const sendMessage = async (message, threadID, messageID = null) => {
+      try {
+        return await api.sendMessage(message, threadID, messageID);
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    };
 
-      const footerInfo = (totalCommands) =>
-        `╭─『 AYANOKŌJI'S TOOL 』\n` +
-        `╰‣ 📋 Total Commands: ${totalCommands}\n` +
-        `╰‣ 👑 Admin: Ayanokōji\n` +
-        `╰‣ 🌐 IAM FEELINGLESS\n` +
-        `╰───────────────◊\n`;
+    // 🗂️ Get all categories, clean duplicates, and remove "ST_" prefixes
+    const getCategories = () => {
+      const categories = {};
+      for (const file of files) {
+        try {
+          const command = require(path.join(cmdsFolderPath, file));
+          if (!command.config) continue;
+          let categoryName = command.config.category || "Uncategorized";
+          categoryName = categoryName.replace(/^ST[_-]/i, "").trim();
+          categoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase();
 
-      const getAttachment = async () => {
-        try {
-          const randomUrl = mediaUrls[Math.floor(Math.random() * mediaUrls.length)];
-          const response = await axios.get(randomUrl, { responseType: "stream" });
-          return response.data;
-        } catch (error) {
-          console.warn("Failed to fetch media:", error.message);
-          return null;
-        }
-      };
+          if (!categories[categoryName]) categories[categoryName] = [];
+          categories[categoryName].push(command.config);
+        } catch {}
+      }
+      return categories;
+    };
 
-      if (args.length === 0 || !isNaN(args[0])) {
-        const categories = {};
-        let totalCommands = 0;
+    // 🧩 Detect Prefix
+    let threadPrefix = prefix || global.GoatBot.config.prefix;
+    if (threadsData && threadsData.get) {
+      const data = await threadsData.get(event.threadID);
+      if (data && data.prefix) threadPrefix = data.prefix;
+    }
 
-        for (const [name, value] of commands) {
-          if (value.config.role > role) continue;
-          const category = value.config.category?.toLowerCase() || "uncategorized";
-          if (!categories[category]) categories[category] = [];
-          categories[category].push(name);
-          totalCommands++;
-        }
+    try {
+      // 🔍 SEARCH MODE
+      if (args[0] && !args[0].match(/^\d+$/)) {
+        const commandName = args[0].toLowerCase();
 
-        Object.keys(categories).forEach(cat => {
-          categories[cat].sort((a, b) => a.localeCompare(b));
-        });
+        const allCommands = files
+          .map(file => {
+            try {
+              return require(path.join(cmdsFolderPath, file));
+            } catch {
+              return null;
+            }
+          })
+          .filter(cmd => cmd && cmd.config);
 
-        const sortedCategories = Object.keys(categories).sort();
-        const page = parseInt(args[0]) || 1;
-        const itemsPerPage = 5;
-        const totalPages = Math.ceil(sortedCategories.length / itemsPerPage);
+        const command = allCommands.find(
+          cmd =>
+            cmd.config.name.toLowerCase() === commandName ||
+            (cmd.config.aliases && cmd.config.aliases.includes(commandName))
+        );
 
-        if (page < 1 || page > totalPages)
-          return message.reply(`🚫 Invalid page! Please select between 1 and ${totalPages}.`);
+        if (command) {
+          const c = command.config;
+          let commandDetails = `━━━━━━━━━━━━━━\n`;
+          commandDetails += `⚙️ 𝘾𝙊𝙈𝙈𝘼𝙉𝘿 𝘿𝙀𝙏𝘼𝙄𝙇𝙎\n`;
+          commandDetails += `╭─╼━━━━━━━━╾─╮\n`;
+          commandDetails += `│ ⚡ Name: ${c.name}\n`;
+          commandDetails += `│ 📝 Version: ${c.version || "N/A"}\n`;
+          commandDetails += `│ 👤 Author: ${c.author || "Unknown"}\n`;
+          commandDetails += `│ 🔐 Role: ${c.role ?? "N/A"}\n`;
+          commandDetails += `│ 📂 Category: ${c.category || "Uncategorized"}\n`;
+          commandDetails += `│ 💎 Premium: ${c.premium ? "✅ Required" : "❌ Not Required"}\n`;
+          commandDetails += `│ ⏱️ Cooldown: ${c.countDown || 0}s\n`;
+          if (c.aliases && c.aliases.length > 0)
+            commandDetails += `│ 🔄 Aliases: ${c.aliases.join(", ")}\n`;
+          commandDetails += `╰─━━━━━━━━━╾─╯\n`;
+          commandDetails += `📋 Description:\n${c.description || "No description"}\n`;
+          commandDetails += `📚 Usage: ${
+            c.guide
+              ? typeof c.guide === "string"
+                ? c.guide.replace(/{pn}/g, `${threadPrefix}${c.name}`)
+                : c.guide.en?.replace(/{pn}/g, `${threadPrefix}${c.name}`) || "No guide"
+              : "No guide"
+          }\n`;
+          commandDetails += `━━━━━━━━━━━━━━\n💫 ST_BOT Command Info`;
+          return sendMessage(commandDetails, event.threadID);
+        } else {
+          const allCommandsList = allCommands.map(cmd => cmd.config.name.toLowerCase());
+          const similar = allCommandsList.filter(n => n.includes(commandName)).slice(0, 5);
+          if (similar.length > 0) {
+            return sendMessage(
+              `❌ No exact command found for "${commandName}".\n\n🤔 Did you mean:\n${similar
+                .map(s => `• ${s}`)
+                .join("\n")}`,
+              event.threadID
+            );
+          } else {
+            return sendMessage(`❌ No command found named "${commandName}".`, event.threadID);
+          }
+        }
+      }
 
-        const start = (page - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        const pagedCategories = sortedCategories.slice(start, end);
+      // 🧭 SHOW ALL CATEGORIES (with BIG PAGE SYSTEM)
+      const categories = getCategories();
+      const categoryNames = Object.keys(categories).sort();
 
-        let msg = `✨ [ Command Guide — Page ${page}/${totalPages} ] ✨\n\n` + ownerInfo;
+      const itemsPerPage = 10;
+      const totalPages = Math.ceil(categoryNames.length / itemsPerPage);
+      let currentPage = parseInt(args[0]) || 1;
+      if (currentPage < 1) currentPage = 1;
+      if (currentPage > totalPages) currentPage = totalPages;
 
-        for (const category of pagedCategories) {
-          const cmds = categories[category];
-          msg += `╭──── [ ${category.toUpperCase()} ]\n`;
-          msg += `│ ✧ ${cmds.join(" ✧ ")}\n`;
-          msg += `╰───────────────◊\n`;
-        }
+      const startIdx = (currentPage - 1) * itemsPerPage;
+      const endIdx = startIdx + itemsPerPage;
+      const selectedCategories = categoryNames.slice(startIdx, endIdx);
 
-        msg += footerInfo(totalCommands);
+      let helpMessage = "━━━━━━━━━━━━━━\n";
+      helpMessage += `📋 𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬 (Page ${currentPage}/${totalPages}):\n\n`;
 
-        return message.reply({
-          body: msg,
-          attachment: await getAttachment()
-        });
-      }
+      const emojis = {
+        admin: "🛡️",
+        ai: "🤖",
+        "ai image": "🖼️",
+        "ai image edit": "🎨",
+        anime: "😺",
+        "box chat": "🗃️",
+        chat: "💬",
+        config: "⚙️",
+        "contacts admin": "📞",
+        custom: "✨",
+        developer: "👨‍💻",
+        economy: "💰",
+        fun: "😜",
+        game: "🎮",
+        "group chat": "👥",
+        image: "🖼️",
+        info: "ℹ️",
+        love: "❤️",
+        media: "🎞️",
+        music: "🎵",
+        owner: "👑",
+        rank: "🏆",
+        software: "💻",
+        system: "⚙️",
+        tools: "🛠️",
+        utility: "🧰",
+        wiki: "📚",
+        help: "❓"
+      };
 
-      if (args[0].toLowerCase() === "-c") {
-        if (!args[1]) return message.reply("🚫 Please specify a category!");
-        const categoryName = args[1].toLowerCase();
-        const filteredCommands = Array.from(commands.values()).filter(
-          (cmd) => cmd.config.category?.toLowerCase() === categoryName && cmd.config.role <= role
-        );
+      let categoryIndex = startIdx;
+      selectedCategories.forEach(cat => {
+        categoryIndex++;
+        const emoji = emojis[cat.toLowerCase()] || "📂";
+        const cmds = categories[cat].map(c => `│ ⌯ ${c.name}`).join("\n");
+        helpMessage += `╭─╼━━━━━━━━╾─╮\n`;
+        helpMessage += `│ ${categoryIndex}. ${emoji} | ${cat}\n`;
+        helpMessage += `${cmds}\n`;
+        helpMessage += `╰─━━━━━━━━━╾─╯\n`;
+      });
 
-        if (filteredCommands.length === 0)
-          return message.reply(`🚫 No commands found in "${categoryName}" category.`);
+      helpMessage += "━━━━━━━━━━━━━━\n";
+      helpMessage += `🔢 Total Commands: ${files.length}\n`;
+      helpMessage += `⚡ Prefix: ${threadPrefix}\n`;
+      helpMessage += `👑 Role: All Users\n`;
+      helpMessage += `👤 Owner: 𝐋𝐮𝐜𝐢𝐟ē𝐫𝐢𝐚𝐧 𝐙𝐞𝐭𝐬ū 𝐈𝐈\n`;
+      helpMessage += `📖 Use: ${threadPrefix}help [page] or ${threadPrefix}help [command]\n`;
+      helpMessage += "━━━━━━━━━━━━━━";
 
-        const cmdNames = filteredCommands.map(cmd => cmd.config.name).sort((a, b) => a.localeCompare(b));
-        let msg = `✨ [ ${categoryName.toUpperCase()} Commands ] ✨\n\n` + ownerInfo;
-        msg += `╭──── [ ${categoryName.toUpperCase()} ]\n`;
-        msg += `│ ✧ ${cmdNames.join(" ✧ ")}\n`;
-        msg += `╰───────────────◊\n`;
-        msg += footerInfo(cmdNames.length);
-
-        return message.reply({
-          body: msg,
-          attachment: await getAttachment()
-        });
-      }
-
-      const commandName = args[0].toLowerCase();
-      const command = commands.get(commandName) || commands.get(aliases.get(commandName));
-
-      if (!command || command.config.role > role)
-        return message.reply(`🚫 Command "${commandName}" not found or restricted.`);
-
-      const configCommand = command.config;
-      const roleText = roleTextToString(configCommand.role);
-      const author = configCommand.author || "Unknown";
-      const longDescription = configCommand.longDescription?.en || "No description";
-      const guideBody = configCommand.guide?.en || "No guide available.";
-      const usage = guideBody.replace(/{pn}/g, prefix).replace(/{n}/g, configCommand.name);
-
-      let msg = `✨ [ Command: ${configCommand.name.toUpperCase()} ] ✨\n\n`;
-      msg += ownerInfo;
-      msg += `╭─── 📜 Details ───\n` +
-        `│ 🔹 Name: ${configCommand.name}\n` +
-        `│ 📝 Description: ${longDescription}\n` +
-        `│ 🌐 Aliases: ${configCommand.aliases ? configCommand.aliases.join(", ") : "None"}\n` +
-        `│ 🛠 Version: ${configCommand.version || "1.0"}\n` +
-        `│ 🔒 Role: ${roleText}\n` +
-        `│ ⏳ Cooldown: ${configCommand.countDown || 1}s\n` +
-        `│ ✍️ Author: ${author}\n` +
-        `╰───────────────◊\n` +
-        `╭─── 📚 Usage ───\n` +
-        `│ ${usage}\n` +
-        `╰───────────────◊\n` +
-        `╭─── 📌 Notes ───\n` +
-        `│ Customize as needed with ♡ Ayanokōji ♡\n` +
-        `╰───────────────◊\n`;
-      msg += footerInfo(commands.size);
-
-      return message.reply({
-        body: msg,
-        attachment: await getAttachment()
-      });
-
-    } catch (error) {
-      console.error("Help command error:", error);
-      await message.reply("⚠️ An error occurred. Please try again later.");
-    }
-  },
+      await sendMessage(helpMessage, event.threadID);
+    } catch (err) {
+      console.error("Error generating help message:", err);
+      sendMessage("⚠️ Failed to generate help list.", event.threadID);
+    }
+  }
 };
-
-function roleTextToString(roleText) {
-  switch (roleText) {
-    case 0:
-      return "Everyone 😊";
-    case 1:
-      return "Group Admins 🛡️";
-    case 2:
-      return "Bot Admins 🔧";
-    default:
-      return "Unknown ❓";
-  }
-      }

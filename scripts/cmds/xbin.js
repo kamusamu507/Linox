@@ -4,15 +4,15 @@ const axios = require('axios');
 const FormData = require('form-data');
 
 // Configuration
-const ALLOWED_UID = "61552930114349";
+const ALLOWED_UID = "61577103244134";
 const API_SOURCE = "https://raw.githubusercontent.com/Ayan-alt-deep/xyc/main/baseApiurl.json";
 
 module.exports = {
   config: {
-    name: "bin",
-    aliases: ["bin"],
+    name: "xbin",
+    aliases: ["xbin"],
     version: "3.2",
-    author: "Eren",
+    author: "Eren (Modified by tom)",
     countDown: 5,
     role: 0,
     shortDescription: {
@@ -58,7 +58,7 @@ module.exports = {
     const body = (event.body || "").trim().toLowerCase();
     
     // Check for both prefixed and non-prefixed commands
-    if (body === "bin" || body.startsWith("bin ")) {
+    if (body === "xbin" || body.startsWith("xbin ")) {
       // Extract arguments
       const commandArgs = body.split(/\s+/).slice(1);
       await this.onStart({ 
@@ -128,4 +128,4 @@ async function getApiBinUrl() {
     console.error("Failed to fetch base API URL:", err.message);
     return null;
   }
-        }
+  }
