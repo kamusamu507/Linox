@@ -1,107 +1,69 @@
-const fs = require("fs-extra");
-const request = require("request");
-const os = require("os");
+const { getStreamFromURL } = global.utils;
 
 module.exports = {
-  config: {
-    name: "owner",
-    version: "1.0",
-    author: "✨ Eren Yeh ✨",
-    shortDescription: "Show full bot owner info with videos & Urdu bio",
-    longDescription: "Detailed owner information with bot stats, uptime, Urdu bio and cool videos.",
-    category: "ℹ️ Info",
-    guide: {
-      en: ".owner"
-    },
-    usePrefix: true
-  },
+  config: {
+    name: "owner",
+    version: 2.1,
+    author: "Jani nh ke manger nati cng marche 🙂",
+    longDescription: "Info about bot and owner",
+    category: "Special",
+    guide: {
+      en: "{p}owner or just type owner"
+    },
+    usePrefix: false
+  },
 
-  onStart: async function ({ api, event }) {
-    const ownerInfo = {
-      name: "Xos Eren",
-      whatsapp: "+8801839268235",
-      botName: "💦 SpiDeY 🕸️",
-      botType: "GoatBot",
-      commandCooldown: "5s",
-      ownerID: "61574046213712",
-      botVersion: "1.0",
-      bio: "اُسے نئے طریقوں سے بنانے کی صلاحیت ہے، ایک اچھا اور فعال معاون۔"
-    };
+  onStart: async function (context) {
+    await module.exports.sendOwnerInfo(context);
+  },
 
-    const botUptime = process.uptime();
-    const botHours = Math.floor(botUptime / 3600);
-    const botMinutes = Math.floor((botUptime % 3600) / 60);
-    const botSeconds = Math.floor(botUptime % 60);
-    const formattedBotUptime = `${botHours}h ${botMinutes}m ${botSeconds}s`;
+  onChat: async function ({ event, message, usersData }) {
+    const prefix = global.GoatBot.config.prefix || "";
+    const body = (event.body || "").toLowerCase().trim();
+    const triggers = ["owner", `${prefix}owner`];
+    if (!triggers.includes(body)) return;
+    await module.exports.sendOwnerInfo({ event, message, usersData });
+  },
 
-    const sysUptime = os.uptime();
-    const sysDays = Math.floor(sysUptime / (3600 * 24));
-    const sysHours = Math.floor((sysUptime % (3600 * 24)) / 3600);
-    const sysMinutes = Math.floor((sysUptime % 3600) / 60);
-    const sysSeconds = Math.floor(sysUptime % 60);
-    const formattedSysUptime = `${sysDays}d ${sysHours}h ${sysMinutes}m ${sysSeconds}s`;
+  sendOwnerInfo: async function ({ event, message, usersData }) {
+    const videoURL = "https://files.catbox.moe/m9m9ld.mp4";
+    const attachment = await getStreamFromURL(videoURL);
 
-    const body = `
-╭──────────╮
-        ʙᴏᴛ ᴏᴡɴᴇʀ ɪɴғᴏ   😾💋
-╰──────────╯      ──────────────────────────╯
+    const id = event.senderID;
+    const userData = usersData ? await usersData.get(id) : null;
+    const name = userData?.name || "User";
+    const mentions = [{ id, tag: name }];
 
-👤 ᴏᴡɴᴇʀ ɴᴀᴍᴇ: ${ownerInfo.name}
-📱 ᴏᴡɴᴇʀ ᴡʜᴀᴛsᴀᴘᴘ: ${ownerInfo.whatsapp}
+    const info = `
+╭─❖─────────────❖
+│   │     𝐎𝐰𝐧𝐞𝐫 𝐈𝐧𝐟𝐨     │
+├─────────────────❖
+│ 👤 Name       : 𝐋𝐮𝐜𝐢𝐟ē𝐫𝐢𝐚𝐧 II
+│ 📍 From        : 𝐘𝐨𝐮𝐫 𝐇𝐞𝐚𝐫𝐭 II
+│ 🎓 Class       : 𝟱 II
+│ 🎂 Birthday  : 𝟵 𝗡𝗼𝘃 II
+│ 🔞 Age    : 𝐃𝐨𝐞𝐬𝐧'𝐭 𝐦𝐚𝐭𝐭𝐞𝐫 II
+│ 📏 Height     : 𝐔𝐧𝐤𝐧𝐨𝐰𝐧 II
+│ 🕌 Religion : 𝐈𝐬𝐥𝐚𝐦 II
+├─────────────────❖
+│ 🔗 Facebook : 𝐟𝟑𝐜𝐤𝐮𝐔 II
+│ 📸 Instagram : 𝐥𝐨𝐚𝐝𝐢𝗻𝗴 II
+│ ❤️ Relation  : 𝐒𝐞𝐜𝐫𝐞𝐭 II
+│ 🩸 Blood group : 𝐍𝐨𝐭 𝐬𝐮𝐫𝐞 II
+╰─❖─────────────❖
+    `.trim();
 
-📦 ʙᴏᴛ ᴛʏᴘᴇ: ${ownerInfo.botType}
-
-⏳ ᴄᴏᴍᴍᴀɴᴅ ᴄᴏᴏʟᴅᴏᴡɴ: ${ownerInfo.commandCooldown}
-
-🆔 ᴏᴡɴᴇʀ ɪᴅ: ${ownerInfo.ownerID}
-
-🤖 ʙᴏᴛ ɴᴀᴍᴇ: ${ownerInfo.botName}
-
-💬 ᴇᴘʜᴏ: Responsive bot for automation and management.
-
-
-🌟 ʙɪᴏ: ${ownerInfo.bio}
-
-────────────────────────────────────
-
-
-`;
-
-    const imgurVideos = [
-      "https://i.imgur.com/0bCwiQa.mp4"
-    ];
-
-    const downloadVideo = (url, path) => {
-      return new Promise((resolve, reject) => {
-        request(url)
-          .pipe(fs.createWriteStream(path))
-          .on("close", resolve)
-          .on("error", reject);
-      });
-    };
-
-    const videoPaths = [];
-    for (let i = 0; i < imgurVideos.length; i++) {
-      const path = `${__dirname}/cache/video${i}.mp4`;
-      await downloadVideo(imgurVideos[i], path);
-      videoPaths.push(path);
-    }
-
-    api.sendMessage(
-      {
-        body,
-        attachment: videoPaths.map(p => fs.createReadStream(p))
-      },
-      event.threadID,
-      () => videoPaths.forEach(p => fs.unlinkSync(p)),
-      event.messageID
-    );
-  },
-
-  onChat: async function ({ event, message }) {
-    const body = event.body?.trim().toLowerCase();
-    if (body === "owner") {
-      return this.onStart({ event, message });
-    }
-  }
+    if (message && typeof message.reply === "function") {
+      message.reply({
+        body: info,
+        attachment,
+        mentions
+      });
+    } else if (event && typeof global.GoatBot.api.sendMessage === "function") {
+      global.GoatBot.api.sendMessage(
+        { body: info, attachment, mentions },
+        event.threadID
+      );
+    }
+  }
 };
