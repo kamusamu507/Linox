@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+const IMAGE_URL = "https://files.catbox.moe/3fp3vf.gif";
+
 module.exports = {
   config: {
     name: "help",
@@ -8,32 +10,44 @@ module.exports = {
     role: 0,
     countDown: 5,
     author: "ST | Sheikh Tamim + Modified by Alamin × luciferian",
-    description: "Displays all available commands and their categories, with simple search suggestions.",
+    description:
+      "Displays all available commands and their categories, with simple search suggestions.",
     category: "help"
   },
 
   onStart: async ({ api, event, args, threadsData, prefix }) => {
     const cmdsFolderPath = path.join(__dirname, ".");
-    const files = fs.readdirSync(cmdsFolderPath).filter(file => file.endsWith(".js"));
+    const files = fs.readdirSync(cmdsFolderPath).filter(file =>
+      file.endsWith(".js")
+    );
 
+    // 🖼️ SEND MESSAGE WITH CATBOX IMAGE
     const sendMessage = async (message, threadID, messageID = null) => {
       try {
-        return await api.sendMessage(message, threadID, messageID);
+        const attachment = await global.utils.getStreamFromURL(IMAGE_URL);
+        return await api.sendMessage(
+          { body: message, attachment },
+          threadID,
+          messageID
+        );
       } catch (error) {
         console.error("Error sending message:", error);
       }
     };
 
-    // 🗂️ Get all categories, clean duplicates, and remove "ST_" prefixes
+    // 🗂️ GET CATEGORIES
     const getCategories = () => {
       const categories = {};
       for (const file of files) {
         try {
           const command = require(path.join(cmdsFolderPath, file));
           if (!command.config) continue;
+
           let categoryName = command.config.category || "Uncategorized";
           categoryName = categoryName.replace(/^ST[_-]/i, "").trim();
-          categoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase();
+          categoryName =
+            categoryName.charAt(0).toUpperCase() +
+            categoryName.slice(1).toLowerCase();
 
           if (!categories[categoryName]) categories[categoryName] = [];
           categories[categoryName].push(command.config);
@@ -42,7 +56,7 @@ module.exports = {
       return categories;
     };
 
-    // 🧩 Detect Prefix
+    // 🧩 DETECT PREFIX
     let threadPrefix = prefix || global.GoatBot.config.prefix;
     if (threadsData && threadsData.get) {
       const data = await threadsData.get(event.threadID);
@@ -67,7 +81,8 @@ module.exports = {
         const command = allCommands.find(
           cmd =>
             cmd.config.name.toLowerCase() === commandName ||
-            (cmd.config.aliases && cmd.config.aliases.includes(commandName))
+            (cmd.config.aliases &&
+              cmd.config.aliases.includes(commandName))
         );
 
         if (command) {
@@ -80,24 +95,40 @@ module.exports = {
           commandDetails += `│ 👤 Author: ${c.author || "Unknown"}\n`;
           commandDetails += `│ 🔐 Role: ${c.role ?? "N/A"}\n`;
           commandDetails += `│ 📂 Category: ${c.category || "Uncategorized"}\n`;
-          commandDetails += `│ 💎 Premium: ${c.premium ? "✅ Required" : "❌ Not Required"}\n`;
+          commandDetails += `│ 💎 Premium: ${
+            c.premium ? "✅ Required" : "❌ Not Required"
+          }\n`;
           commandDetails += `│ ⏱️ Cooldown: ${c.countDown || 0}s\n`;
           if (c.aliases && c.aliases.length > 0)
             commandDetails += `│ 🔄 Aliases: ${c.aliases.join(", ")}\n`;
           commandDetails += `╰─━━━━━━━━━╾─╯\n`;
-          commandDetails += `📋 Description:\n${c.description || "No description"}\n`;
+          commandDetails += `📋 Description:\n${
+            c.description || "No description"
+          }\n`;
           commandDetails += `📚 Usage: ${
             c.guide
               ? typeof c.guide === "string"
-                ? c.guide.replace(/{pn}/g, `${threadPrefix}${c.name}`)
-                : c.guide.en?.replace(/{pn}/g, `${threadPrefix}${c.name}`) || "No guide"
+                ? c.guide.replace(
+                    /{pn}/g,
+                    `${threadPrefix}${c.name}`
+                  )
+                : c.guide.en?.replace(
+                    /{pn}/g,
+                    `${threadPrefix}${c.name}`
+                  ) || "No guide"
               : "No guide"
           }\n`;
-          commandDetails += `━━━━━━━━━━━━━━\n💫 ST_BOT Command Info`;
+          commandDetails += `━━━━━━━━━━━━━━\n💫 Baby Bot Command Info`;
+
           return sendMessage(commandDetails, event.threadID);
         } else {
-          const allCommandsList = allCommands.map(cmd => cmd.config.name.toLowerCase());
-          const similar = allCommandsList.filter(n => n.includes(commandName)).slice(0, 5);
+          const allCommandsList = allCommands.map(cmd =>
+            cmd.config.name.toLowerCase()
+          );
+          const similar = allCommandsList
+            .filter(n => n.includes(commandName))
+            .slice(0, 5);
+
           if (similar.length > 0) {
             return sendMessage(
               `❌ No exact command found for "${commandName}".\n\n🤔 Did you mean:\n${similar
@@ -106,66 +137,40 @@ module.exports = {
               event.threadID
             );
           } else {
-            return sendMessage(`❌ No command found named "${commandName}".`, event.threadID);
+            return sendMessage(
+              `❌ No command found named "${commandName}".`,
+              event.threadID
+            );
           }
         }
       }
 
-      // 🧭 SHOW ALL CATEGORIES (with BIG PAGE SYSTEM)
+      // 🧭 SHOW ALL CATEGORIES (PAGE SYSTEM)
       const categories = getCategories();
       const categoryNames = Object.keys(categories).sort();
 
       const itemsPerPage = 10;
       const totalPages = Math.ceil(categoryNames.length / itemsPerPage);
+
       let currentPage = parseInt(args[0]) || 1;
       if (currentPage < 1) currentPage = 1;
       if (currentPage > totalPages) currentPage = totalPages;
 
       const startIdx = (currentPage - 1) * itemsPerPage;
-      const endIdx = startIdx + itemsPerPage;
-      const selectedCategories = categoryNames.slice(startIdx, endIdx);
+      const selectedCategories = categoryNames.slice(
+        startIdx,
+        startIdx + itemsPerPage
+      );
 
       let helpMessage = "━━━━━━━━━━━━━━\n";
       helpMessage += `📋 𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬 (Page ${currentPage}/${totalPages}):\n\n`;
 
-      const emojis = {
-        admin: "🛡️",
-        ai: "🤖",
-        "ai image": "🖼️",
-        "ai image edit": "🎨",
-        anime: "😺",
-        "box chat": "🗃️",
-        chat: "💬",
-        config: "⚙️",
-        "contacts admin": "📞",
-        custom: "✨",
-        developer: "👨‍💻",
-        economy: "💰",
-        fun: "😜",
-        game: "🎮",
-        "group chat": "👥",
-        image: "🖼️",
-        info: "ℹ️",
-        love: "❤️",
-        media: "🎞️",
-        music: "🎵",
-        owner: "👑",
-        rank: "🏆",
-        software: "💻",
-        system: "⚙️",
-        tools: "🛠️",
-        utility: "🧰",
-        wiki: "📚",
-        help: "❓"
-      };
-
-      let categoryIndex = startIdx;
-      selectedCategories.forEach(cat => {
-        categoryIndex++;
-        const emoji = emojis[cat.toLowerCase()] || "📂";
-        const cmds = categories[cat].map(c => `│ ⌯ ${c.name}`).join("\n");
+      selectedCategories.forEach((cat, index) => {
+        const cmds = categories[cat]
+          .map(c => `│ ⌯ ${c.name}`)
+          .join("\n");
         helpMessage += `╭─╼━━━━━━━━╾─╮\n`;
-        helpMessage += `│ ${categoryIndex}. ${emoji} | ${cat}\n`;
+        helpMessage += `│ ${startIdx + index + 1}. 📂 | ${cat}\n`;
         helpMessage += `${cmds}\n`;
         helpMessage += `╰─━━━━━━━━━╾─╯\n`;
       });
@@ -174,7 +179,7 @@ module.exports = {
       helpMessage += `🔢 Total Commands: ${files.length}\n`;
       helpMessage += `⚡ Prefix: ${threadPrefix}\n`;
       helpMessage += `👑 Role: All Users\n`;
-      helpMessage += `👤 Owner: 𝐋𝐮𝐜𝐢𝐟ē𝐫𝐢𝐚𝐧 𝐙𝐞𝐭𝐬ū 𝐈𝐈\n`;
+      helpMessage += `👤 Owner: 𝐋𝐮𝐜𝐢𝐟ē𝐫𝐢𝐚𝐧 𝐈𝐈\n`;
       helpMessage += `📖 Use: ${threadPrefix}help [page] or ${threadPrefix}help [command]\n`;
       helpMessage += "━━━━━━━━━━━━━━";
 
