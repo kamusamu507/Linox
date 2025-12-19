@@ -6,7 +6,7 @@ const axios = require('axios');
 module.exports = {
     config: {
         name: "likh",
-        aliases: ["fc2"],
+        aliases: ["likh"],
         version: "1.0",
         author: "Vex_kshitiz",
         countDown: 5,
