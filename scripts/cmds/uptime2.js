@@ -1,92 +1,54 @@
-const os = require("os");
-const pidusage = require("pidusage");
-const fs = require("fs");
-
-const authorUID = "61583277142207";
-
 module.exports = {
-  config: {
-    name: "uptime",
-    aliases: ["upt", "up2", "upt2", "up"],
-    version: "2.3",
-    author: "Eren",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Show system and bot status",
-    longDescription: "Displays uptime, CPU, memory, disk, and bot stats",
-    category: "info",
-    guide: "{pn}",
-    noPrefix: true
-  },
+	config: {
+  name: "uptime2",
+  aliases: ["up2", "upt2"],
+  version: "1.0",
+  author: "Ullash ッ",
+  role: 0,
+  shortDescription: {
+   en: "Check the bot's uptime."
+  },
+  longDescription: {
+   en: "Shows how long the bot has been running."
+  },
+  category: "system",
+  guide: {
+   en: "Use {p}uptime2 or just type uptime2 without prefix."
+  }
+	},
 
-  // Normal prefix handler
-  onStart: async function (ctx) {
-    await module.exports.sendUptime(ctx);
-  },
+	onStart: async function () {},
 
-  // noPrefix for author only
-  onChat: async function (ctx) {
-    const input = ctx.event.body?.toLowerCase().trim();
-    const { config } = module.exports;
-    const triggers = [config.name, ...(config.aliases || [])];
+	onChat: async function ({ message, event }) {
+  const prefix = global.GoatBot.config.prefix;
+  const body = (event.body || "").toLowerCase().trim();
 
-    if (!triggers.includes(input)) return;
-    if (ctx.event.senderID !== authorUID) return; // Only you can use noPrefix
+  // Remove prefix if exists
+  let command = body;
+  if (body.startsWith(prefix)) {
+   command = body.slice(prefix.length).trim(); // remove prefix
+  }
 
-    await module.exports.sendUptime(ctx);
-  },
+  // All valid commands
+  const validCommands = ["uptime2", "upt2", "up2"];
 
-  sendUptime: async function ({ message, usersData, threadsData }) {
-    const now = new Date();
-    const formatDate = now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+  if (!validCommands.includes(command)) return;
 
-    const uptimeBot = process.uptime();
-    const uptimeSys = os.uptime();
-    const toTime = (sec) => {
-      const d = Math.floor(sec / 86400);
-      const h = Math.floor((sec % 86400) / 3600);
-      const m = Math.floor((sec % 3600) / 60);
-      const s = Math.floor(sec % 60);
-      return `${d ? `${d}d ` : ""}${h}h ${m}m ${s}s`;
-    };
+  // Uptime calculation
+  const uptime = process.uptime();
+  const seconds = Math.floor(uptime % 60);
+  const minutes = Math.floor((uptime / 60) % 60);
+  const hours = Math.floor((uptime / (60 * 60)) % 24);
+  const days = Math.floor(uptime / (60 * 60 * 24));
 
-    const usage = await pidusage(process.pid);
-    const totalRam = (os.totalmem() / 1024 / 1024 / 1024).toFixed(0);
-    const freeRam = (os.freemem() / 1024 / 1024 / 1024).toFixed(0);
-    const usedRam = (usage.memory / 1024 / 1024).toFixed(1);
-    const cpuUsage = usage.cpu.toFixed(1);
-    const cpuModel = os.cpus()[0].model;
-    const cpuCores = os.cpus().length;
-    const pkgCount = Object.keys(JSON.parse(fs.readFileSync('package.json')).dependencies || {}).length;
+  let uptimeString = "";
+  if (days > 0) uptimeString += `➪ ${days} day${days > 1 ? "s" : ""}\n`;
+  if (hours > 0) uptimeString += `➪ ${hours} hour${hours > 1 ? "s" : ""}\n`;
+  if (minutes > 0) uptimeString += `➪ ${minutes} minute${minutes > 1 ? "s" : ""}\n`;
+  uptimeString += `➪ ${seconds} second${seconds > 1 ? "s" : ""}`;
 
-    const users = await usersData.getAll();
-    const threads = await threadsData.getAll();
+  const messageContent = `🎀🐥 BA'BY くめ\n\n${uptimeString}\n\n`;
 
-    const msg =
-`━━━━━━━━━━━━━━━━━
-            𝗕𝗼𝘁 𝗦𝘁𝗮𝘁𝘂𝘀
-📅 𝗗𝗮𝘁𝗲: ${formatDate}
-━━━━━━━━━━━━━━━━━
-
-⏱️ 𝗕𝗼𝘁 𝗨𝗽𝘁𝗶𝗺𝗲 : ${toTime(uptimeBot)}
-🖥️ 𝗦𝘆𝘀 𝗨𝗽𝘁𝗶𝗺𝗲 : ${toTime(uptimeSys)}
-
-🧠 𝗖𝗣𝗨 : ${cpuModel}
-🔧 𝗖𝗼𝗿𝗲𝘀 : ${cpuCores}
-📊 𝗟𝗼𝗮𝗱 : ${cpuUsage}%
-
-💾 𝗥𝗔𝗠 : ${usedRam} MB / ${totalRam} GB
-📂 𝗙𝗿𝗲𝗲 𝗠𝗲𝗺𝗼𝗿𝘆 : ${freeRam} GB
-
-📦 𝗣𝗮𝗰𝗸𝗮𝗴𝗲𝘀 : ${pkgCount}
-👥 𝗨𝘀𝗲𝗿𝘀 : ${users.length}
-👨‍👩‍👧‍👦 𝗚𝗿𝗼𝘂𝗽𝘀 : ${threads.length}
-
-🗂️ 𝗗𝗶𝘀𝗸 𝗨𝘀𝗲𝗱 : 325G / 387G
-📁 𝗔𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲 : 63G
-
-━━━━━━━━━━━━━━━━━`;
-
-    message.reply(msg);
-  }
+  message.reply(messageContent);
+	}
 };

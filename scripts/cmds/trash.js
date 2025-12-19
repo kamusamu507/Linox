@@ -16,13 +16,13 @@ const baseApiUrl = async () => {
 
 module.exports = {
   config: {
-    name: "rip",
+    name: "trash",
     aliases: [],
     version: "1.7",
     author: "MahMUD",
     role: 0,
     category: "fun",
-    cooldown: 10,
+    cooldown: 5,
     guide: "rip [mention-reply-UID]",
   },
 
@@ -36,18 +36,18 @@ module.exports = {
     const { threadID, messageID, messageReply, mentions } = event;
     let id2; if (messageReply) { id2 = messageReply.senderID; } else if (Object.keys(mentions).length > 0) {
     id2 = Object.keys(mentions)[0];  } else if (args[0]) {  id2 = args[0]; } else {
-    return api.sendMessage( "baby, Mention, reply, or provide UID of the target.", threadID, messageID );
+    return api.sendMessage( "𝐌𝐞𝐧𝐭𝐢𝐨𝐧 𝐫𝐞𝐩𝐥𝐲 𝐨𝐫 𝐩𝐫𝐨𝐯𝐢𝐝𝐞 𝐮𝐢𝐝 𝐨𝐟 𝐭𝐡𝐞 𝐭𝐚𝐫𝐠𝐞𝐭!", threadID, messageID );
   }
 
    try {
-    const url = `${await baseApiUrl()}/api/dig?type=rip&user=${id2}`;
+    const url = `${await baseApiUrl()}/api/dig?type=trash&user=${id2}`;
     const response = await axios.get(url, { responseType: "arraybuffer" });
-    const filePath = path.join(__dirname, `rip_${id2}.png`);
+    const filePath = path.join(__dirname, `trash_${id2}.png`);
     fs.writeFileSync(filePath, response.data);
 
      
     api.sendMessage({ attachment: fs.createReadStream(filePath),
-    body: `𝐄𝐟𝐟𝐞𝐜𝐭 𝐫𝐢𝐩 𝐬𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥 🐸`,
+    body: `𝐄𝐟𝐟𝐞𝐜𝐭 𝐭𝐫𝐚𝐬𝐡 𝐬𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥 🐸`,
      },
     threadID, () => fs.unlinkSync(filePath),  messageID );
   } catch (err) {

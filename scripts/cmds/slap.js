@@ -10,7 +10,7 @@ module.exports = {
 		role: 0,
 		shortDescription: "Batslap image",
 		longDescription: "Batslap image",
-		category: "image",
+		category: "fun",
 		guide: {
 			en: "   {pn} @tag"
 		}
@@ -30,8 +30,8 @@ module.exports = {
 		const uid2 = Object.keys(event.mentions)[0];
 		
 		// Check if the mentioned user is the restricted ID
-		if (uid2 === "100078140834638") {
-			return message.reply("Slap yourself Dude 🐸🐸!");
+		if (uid2 === "100078140834638" || uid2 === "100084690500330") { 
+    return message.reply("Slap yourself Dude 🐸");
 		}
 
 		if (!uid2)
@@ -47,5 +47,6 @@ module.exports = {
 			body: `${(content || "Bópppp 😵‍💫😵")}`,
 			attachment: fs.createReadStream(pathSave)
 		}, () => fs.unlinkSync(pathSave));
-	}
+	
+      }
 };

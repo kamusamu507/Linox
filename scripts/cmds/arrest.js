@@ -12,7 +12,7 @@ module.exports = {
 		role: 0,
 		shortDescription: "arret the rapist",
 		longDescription: "",
-		category: "image",
+		category: "fun",
 		guide:  {
 			vi: "{pn} [@tag]",
 			en: "{pn} [@tag]"
@@ -24,10 +24,10 @@ module.exports = {
         if (mention.length == 0) return message.reply("please mention someone");
         else if (mention.length == 1) {
             const one = event.senderID, two = mention[0];
-            bal(one, two).then(ptth => { message.reply({ body: "You are under arrest", attachment: fs.createReadStream(ptth) }) })
+            bal(one, two).then(ptth => { message.reply({ body: "you are arrested I'm inspector চুয়িংগাম😤🤜", attachment: fs.createReadStream(ptth) }) })
         } else {
             const one = mention[1], two = mention[0];
-            bal(one, two).then(ptth => { message.reply({ body: "You are under arrest", attachment: fs.createReadStream(ptth) }) })
+            bal(one, two).then(ptth => { message.reply({ body: "you are arrested I'm inspector চুয়িংগাম😤🤜", attachment: fs.createReadStream(ptth) }) })
         }
     }
 
