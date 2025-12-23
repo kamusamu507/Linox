@@ -1,46 +1,24 @@
-const axios = require("axios");
-
-let lastResponse = null; // আগের মেসেজ মনে রাখার জন্য
-
 module.exports = {
-  config: {
-    name: "goiadmin",
-    author: "Eren",
-    role: 0,
-    shortDescription: "Owner Mention Protection",
-    longDescription: "Prevents unnecessary mentions of Eren",
-    category: "BOT",
-    guide: "{pn}"
-  },
+	config: {
+  name: "goiadmin",
+  author: "𝗔𝗺𝗶𝗻𝘂𝗹 𝗦𝗼𝗿𝗱𝗮𝗿",
+  role: 0,
+  shortDescription: " ",
+  longDescription: "",
+  category: "BOT",
+  guide: "{pn}"
+	},
 
-  onChat: async function({ api, event }) {
-    const authorID = "61576212342334";
-
-    if (event.senderID !== authorID) {
-      const mentions = Object.keys(event.mentions || {});
-      if (mentions.includes(authorID)) {
-        try {
-          const res = await axios.get("https://raw.githubusercontent.com/Ayan-alt-deep/xyc/main/goiadmin.json");
-          const responses = res.data.responses;
-
-          if (!responses || responses.length === 0)
-            return api.sendMessage("❌ JSON ফাঁকা!", event.threadID);
-
-          let filtered = responses.filter(msg => msg !== lastResponse);
-          if (filtered.length === 0) filtered = responses;
-
-          const random = filtered[Math.floor(Math.random() * filtered.length)];
-          lastResponse = random;
-
-          return api.sendMessage({ body: random }, event.threadID, event.messageID);
-        } catch (err) {
-          return api.sendMessage("❌ JSON থেকে ডেটা নিতে সমস্যা হয়েছে!", event.threadID);
-        }
-      }
-    }
-  },
-
-  onStart: async function() {
-    console.log("✅ goiadmin Module Loaded with Anti-Repeat Random System");
-  }
+onChat: function({ api, event }) {
+	if (event.senderID !== "61577103244134") {
+  var aid = ["61577103244134"];
+  for (const id of aid) {
+  if ( Object.keys(event.mentions) == id) {
+   var msg = ["𝐋𝐮𝐜𝐢𝐟ē𝐫𝐢𝐚𝐧 বস এখন  বিজি জা বলার আমাকে বলতে পারেন..!!🐰🍒","এতো মিনশন নাহ দিয়া সিংগেল 𝐋𝐮𝐜𝐢𝐟ē𝐫𝐢𝐚𝐧 রে একটা গফ দে 🧛‍♀️","Mantion_না দিয়ে সিরিয়াস প্রেম করতে চাইলে ইনবক্স 🙈","- মেনশন দিসনা পারলে একটা গফ দে..!! 👀😒","Mantion_দিস না বাঁলপাঁক্না 𝐋𝐮𝐜𝐢𝐟ē𝐫𝐢𝐚𝐧 প্রচুর বিজি 😾"];
+   return api.sendMessage({body: msg[Math.floor(Math.random()*msg.length)]}, event.threadID, event.messageID);
+  }
+  }}
+},
+onStart: async function({}) {
+	}
 };
