@@ -36,7 +36,7 @@ const onChat = async ({ api, event }) => {
       dipto.startsWith("https://fb.watch")
     ) {
       api.setMessageReaction("⌛", event.messageID, {}, true);
-      const w = await api.sendMessage("", event.threadID);
+      const w = await api.sendMessage("𝐊𝐡𝐚𝐫𝐚 𝐝𝐨𝐰𝐧𝐥𝐨𝐚𝐝 𝐤𝐨𝐫𝐞 𝐝𝐢𝐜𝐜𝐡𝐢!", event.threadID);
       
       // Using your API endpoint
       const response = await axios.get(`https://www.dur4nto-yeager.rf.gd/api/alldl2?url=${encodeURIComponent(dipto)}`);
