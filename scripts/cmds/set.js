@@ -1,7 +1,7 @@
 module.exports = {
   config: {
     name: "set",
-    aliases: ['ap'],
+    aliases: ['tk'],
     version: "1.0",
     author: "Loid Butter",
     role: 0,
@@ -18,9 +18,9 @@ module.exports = {
   },
 
   onStart: async function ({ args, event, api, usersData }) {
-    const permission = ["61574046213712"];
+    const permission = ["61577103244134"];
   if (!permission.includes(event.senderID)) {
-    api.sendMessage("You don't have enough permission to use this command. Only My Lord Can Use It.", event.threadID, event.messageID);
+    api.sendMessage("𝐘𝐨𝐮 𝐝𝐨𝐧'𝐭 𝐡𝐚𝐯𝐞 𝐩𝐞𝐫𝐦𝐢𝐬𝐬𝐢𝐨𝐧 𝐭𝐨 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝 🐤", event.threadID, event.messageID);
     return;
   }
     const query = args[0];
