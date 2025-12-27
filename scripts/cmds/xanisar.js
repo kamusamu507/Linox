@@ -21,7 +21,7 @@ async function fetchTikTokVideos(query) {
 module.exports = {
   config: {
     name: "xanisar",
-    aliases: ["xanisr","xanisr","xas"],
+    aliases: ["anisr","anisr","as"],
     author: "Vex_kshitiz",
     version: "1.0",
     shortDescription: {
